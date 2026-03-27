@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATCHPOINT SMR | THE BOOKING EXPERIENCE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --accent: #e8ff00; --fem-pink: #ff007a; --dark: #000000;
+            --card: #111111; --border: #222222; --white: #ffffff;
+            --booking-green: #008234; --booking-alert: #cc0000;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { background-color: var(--dark); color: var(--white); overflow-x: hidden; scroll-behavior: smooth; }
+        h1, h2, h3, .logo, .btn, .price, .tag { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+
+        /* --- Header --- */
+        header {
+            padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center;
+            position: fixed; width: 100%; top: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px);
+            z-index: 1000; border-bottom: 1px solid var(--border);
+        }
+        .logo { font-size: 2rem; font-weight: 900; color: #fff; text-decoration: none; }
+        .logo span { background: var(--accent); color: #000; padding: 0 5px; margin-left: 5px; }
+        
+        .cart-icon { position: relative; cursor: pointer; font-size: 1.5rem; color: var(--accent); transition: 0.3s; }
+        .cart-icon:hover { transform: scale(1.1); }
+        .badge { position: absolute; top: -8px; right: -12px; background: white; color: black; font-size: 0.75rem; font-weight: 900; padding: 2px 7px; border-radius: 50%; }
+
+        /* --- Hero & Búsqueda Principal MEJORADA --- */
+        .hero { 
+            padding: 140px 5% 80px; text-align: center; 
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,1)), url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1500'); 
+            background-size: cover; background-position: center 30%;
+        }
+        .hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 0.9; margin-bottom: 15px; }
+
+        /* Nuevo diseño de barra de búsqueda: Alto contraste */
+        .search-bar {
+            background: var(--accent); padding: 10px; border-radius: 12px;
+            display: flex; flex-wrap: wrap; gap: 8px; max-width: 1200px; margin: 30px auto -110px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8); position: relative; z-index: 100;
+        }
+        .search-field {
+            flex: 1; min-width: 180px; background: var(--white); padding: 10px 15px;
+            display: flex; flex-direction: column; border-radius: 6px; border: 2px solid transparent;
+            transition: 0.3s;
+        }
+        .search-field:focus-within { border-color: #000; }
+        .search-field label { font-size: 0.75rem; color: #555; font-weight: 900; margin-bottom: 5px; text-align: left; }
+        .search-field select, .search-field input {
+            background: transparent; border: none; color: #000; font-weight: 900; font-size: 1.05rem; outline: none; cursor: pointer;
+        }
+        
+        .btn-search {
+            background: #000; color: var(--accent); border: none; padding: 0 40px;
+            border-radius: 6px; font-weight: 900; cursor: pointer; font-size: 1.5rem; transition: 0.3s;
+        }
+        .btn-search:hover { background: #222; transform: scale(1.02); }
+
+        /* --- Layout Estilo Booking (Sidebar + Content) --- */
+        .layout-container { display: flex; gap: 30px; padding: 140px 5% 60px; max-width: 1600px; margin: 0 auto; align-items: flex-start; }
+        
+        /* Sidebar de Filtros */
+        .sidebar-filters { flex: 0 0 280px; background: var(--card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); position: sticky; top: 100px; }
+        .filter-group { margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .filter-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .filter-group h4 { font-size: 1.2rem; margin-bottom: 15px; color: var(--accent); font-family: 'Barlow Condensed'; }
+        
+        .checkbox-label { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; font-size: 0.9rem; color: #ccc; }
+        .checkbox-label input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+        
+        /* Resultados */
+        .results-area { flex: 1; }
+        .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .sort-select { background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px 15px; border-radius: 8px; outline: none; font-weight: 700; }
+
+        .list-view { display: flex; flex-direction: column; gap: 20px; }
+        .card { 
+            display: flex; background: var(--card); border-radius: 12px; overflow: hidden; 
+            border: 1px solid var(--border); transition: 0.3s; 
+        }
+        .card:hover { border-color: var(--accent); transform: translateX(5px); }
+        .card-img-wrapper { position: relative; width: 300px; flex-shrink: 0; }
+        .card-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .badge-urgent { position: absolute; top: 10px; left: 10px; background: var(--booking-alert); color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 900; border-radius: 4px; z-index: 10;}
+        .badge-fem { position: absolute; top: 10px; left: 10px; background: var(--fem-pink); color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 900; border-radius: 4px; z-index: 10;}
+        
+        .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-title h3 { font-size: 1.8rem; color: #fff; margin-bottom: 5px; }
+        .card-title p { color: #888; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
+        
+        .rating { display: flex; align-items: center; gap: 8px; text-align: right; }
+        .rating-score { background: var(--accent); color: black; padding: 5px 8px; border-radius: 6px; font-weight: 900; font-size: 1.1rem; }
+        .rating-text { font-size: 0.8rem; color: #aaa; }
+
+        .features { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+        .feature-tag { background: #1a1a1a; border: 1px solid #333; padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; color: #ccc; }
+        .free-cancel { color: var(--booking-green); font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+        .price-box { text-align: left; }
+        .price { font-size: 2rem; color: var(--accent); line-height: 1; }
+        .price-sub { font-size: 0.8rem; color: #666; }
+        
+        .btn-add { background: var(--accent); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 1.1rem; }
+        .btn-add.fem { background: var(--fem-pink); color: white; }
+        .btn-add:hover { filter: brightness(1.2); }
+
+        /* --- Tienda Store --- */
+        .store-section { padding: 40px 5% 80px; max-width: 1600px; margin: 0 auto; border-top: 1px solid #222; }
+        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .store-item { background: var(--card); border: 1px solid #222; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; }
+        .store-item img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
+        .btn-store { border: 1px solid var(--accent); background: transparent; color: var(--accent); padding: 5px 10px; border-radius: 6px; font-weight: 900; font-size: 0.8rem; cursor: pointer; margin-top: 5px; }
+
+        /* --- Sidebar Carrito --- */
+        .cart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1999; display: none; backdrop-filter: blur(5px); }
+        .cart-panel { position: fixed; top: 0; right: -450px; width: 420px; height: 100%; background: #0a0a0a; border-left: 2px solid var(--accent); z-index: 2000; padding: 30px; transition: 0.4s; display: flex; flex-direction: column; }
+        .cart-panel.open { right: 0; }
+        .cart-items-container { flex: 1; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; }
+        
+        .cart-item { background: #151515; padding: 15px; border-radius: 10px; margin-bottom: 12px; border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
+        .cart-item.fem { border-left-color: var(--fem-pink); }
+        
+        .checkout-box { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #333; }
+        .checkout-box input { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: white; border-radius: 8px; margin-bottom: 15px; outline: none; font-weight: 700; }
+        .total-price { font-size: 2.2rem; color: var(--accent); font-weight: 900; text-align: right; margin-bottom: 15px; }
+        .btn-wa { width: 100%; padding: 18px; background: #25d366; color: white; border: none; border-radius: 8px; font-weight: 900; font-size: 1.3rem; cursor: pointer; }
+
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #000; padding: 12px 30px; border-radius: 50px; font-weight: 900; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 3000; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+
+        @media (max-width: 1024px) { 
+            .layout-container { flex-direction: column; }
+            .sidebar-filters { width: 100%; position: static; }
+            .card { flex-direction: column; }
+            .card-img-wrapper { width: 100%; height: 200px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">MATCH<span>POINT</span></a>
+        <div class="cart-icon" onclick="toggleCart()">
+            <i class="fas fa-shopping-bag"></i>
+            <span class="badge" id="cart-count">0</span>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>ENCUENTRA TU CANCHA <span>IDEAL</span></h1>
+        
+        <div class="search-bar">
+            <div class="search-field">
+                <label>ZONA / SEDE</label>
+                <select id="s-sede">
+                    <option value="all">Todo Santa Marta</option>
+                    <option value="curinca">Curinca / Líbano</option>
+                    <option value="pescaito">Pescaíto (Castellana)</option>
+                    <option value="mamatoco">Mamatoco</option>
+                    <option value="ciudadela">La Ciudadela</option>
+                    <option value="taganga">Taganga</option>
+                    <option value="unimag">Universidad (Unimag)</option>
+                    <option value="rodadero">Rodadero / Gaira</option>
+                </select>
+            </div>
+            <div class="search-field">
+                <label>FECHA DEL PARTIDO</label>
+                <input type="date" id="s-fecha">
+            </div>
+            <div class="search-field">
+                <label>CATEGORÍA / RAMA</label>
+                <select id="s-rama">
+                    <option value="all">Cualquier Rama</option>
+                    <option value="fem">Femenino Only</option>
+                    <option value="masc">Masculino Libre</option>
+                    <option value="mix">Mixto Recreativo</option>
+                </select>
+            </div>
+            <div class="search-field">
+                <label>MODALIDAD</label>
+                <select id="s-tipo">
+                    <option value="all">Cualquiera</option>
+                    <option value="individual">Individual (Cupos)</option>
+                    <option value="reto">Reto (Busco Rival)</option>
+                    <option value="alquiler">Alquiler Privado</option>
+                </select>
+            </div>
+            <button class="btn btn-search" onclick="filtrar()"><i class="fas fa-search"></i></button>
+        </div>
+    </section>
+
+    <div class="layout-container">
+        <aside class="sidebar-filters">
+            <h3 style="margin-bottom: 20px; font-size:1.5rem;">Filtros Avanzados</h3>
+            
+            <div class="filter-group">
+                <h4>Superficie</h4>
+                <label class="checkbox-label"><input type="checkbox" value="sintetica" class="cb-sup" onchange="filtrar()"> Sintética</label>
+                <label class="checkbox-label"><input type="checkbox" value="natural" class="cb-sup" onchange="filtrar()"> Césped Natural</label>
+                <label class="checkbox-label"><input type="checkbox" value="arena" class="cb-sup" onchange="filtrar()"> Arena / Playa</label>
+            </div>
+
+            <div class="filter-group">
+                <h4>Beneficios</h4>
+                <label class="checkbox-label"><input type="checkbox" value="techo" class="cb-ben" onchange="filtrar()"> Cancha Techada</label>
+                <label class="checkbox-label"><input type="checkbox" value="parqueo" class="cb-ben" onchange="filtrar()"> Parqueadero</label>
+                <label class="checkbox-label"><input type="checkbox" value="gradas" class="cb-ben" onchange="filtrar()"> Gradas / Tribuna</label>
+            </div>
+        </aside>
+
+        <main class="results-area">
+            <div class="results-header">
+                <h2 id="result-title">Cargando canchas...</h2>
+                <select class="sort-select" id="sort-select" onchange="ordenar()">
+                    <option value="rec">Recomendados</option>
+                    <option value="p-asc">Precio: más bajo primero</option>
+                    <option value="p-desc">Precio: más alto primero</option>
+                    <option value="rating">Mejor valorados</option>
+                </select>
+            </div>
+
+            <div class="list-view" id="main-grid">
+                </div>
+        </main>
+    </div>
+
+    <section class="store-section">
+        <h2>MatchPoint <span style="color:var(--accent)">Store</span></h2>
+        <div class="store-grid">
+            <div class="store-item">
+                <img src="https://images.unsplash.com/photo-1614632537190-23e4146777db?q=80&w=200">
+                <div>
+                    <h4>Petos x10</h4>
+                    <span style="color:var(--accent); font-weight:900;">$5.00</span>
+                    <button class="btn btn-store" onclick="addToCart(101, 'Petos x10', 5, 'store')">Agregar</button>
+                </div>
+            </div>
+            <div class="store-item">
+                <img src="https://images.unsplash.com/photo-1508344928928-7165b67de128?q=80&w=200">
+                <div>
+                    <h4>Balón Profesional</h4>
+                    <span style="color:var(--accent); font-weight:900;">$3.00</span>
+                    <button class="btn btn-store" onclick="addToCart(102, 'Balón Pro', 3, 'store')">Agregar</button>
+                </div>
+            </div>
+            <div class="store-item">
+                <img src="https://images.unsplash.com/photo-1511886929837-354d827aae26?q=80&w=200">
+                <div>
+                    <h4>Pack Hidratación</h4>
+                    <span style="color:var(--accent); font-weight:900;">$10.00</span>
+                    <button class="btn btn-store" onclick="addToCart(103, 'Pack Agua/Gatorade', 10, 'store')">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="cart-overlay" id="cart-overlay" onclick="toggleCart()"></div>
+    <div class="cart-panel" id="cart-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #333; padding-bottom:15px;">
+            <h2 style="color:var(--accent); font-size:2rem;">Tu Reserva</h2>
+            <i class="fas fa-times" onclick="toggleCart()" style="cursor:pointer; font-size:1.5rem; color:#fff"></i>
+        </div>
+        
+        <div class="cart-items-container" id="cart-list"></div>
+
+        <div class="checkout-box">
+            <input type="text" id="cliente-nombre" placeholder="Tu Nombre / Nombre del Equipo">
+            <input type="tel" id="cliente-telefono" placeholder="Tu Número de WhatsApp">
+            
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                <span style="color:#888; font-size:0.9rem; font-weight:700;">TOTAL A PAGAR</span>
+                <div class="total-price" id="cart-total">$0.00</div>
+            </div>
+            <button class="btn btn-wa" onclick="procesarReservaTotal()">
+                <i class="fab fa-whatsapp"></i> RESERVAR POR WHATSAPP
+            </button>
+            <p style="text-align:center; font-size:0.75rem; color:#666; margin-top:10px;">
+                <i class="fas fa-file-excel"></i> Se generará tu recibo automáticamente.
+            </p>
+        </div>
+    </div>
+
+    <div id="toast">Acción exitosa</div>
+
+    <script>
+        // Tus 18 canchas base originales (Intactas)
+        let canchasBase = [
+            { id: 1, n: "Soccer Max Pro", s: "mamatoco", r: "masc", t: "alquiler", p: 55, rate: 4.8, rev: 124, img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=600", sup: "sintetica", ben: ["techo", "parqueo"], urg: "¡Muy solicitado!", urg_t: "urgent" },
+            { id: 2, n: "Mamatoco Femenino F5", s: "mamatoco", r: "fem", t: "individual", p: 8, rate: 4.6, rev: 45, img: "https://images.unsplash.com/photo-1526232762682-d2f5f7ac7def?q=80&w=600", sup: "sintetica", ben: ["parqueo"], urg: "Zona Femenina", urg_t: "fem" },
+            { id: 3, n: "Curinca Arena Retos", s: "curinca", r: "fem", t: "reto", p: 40, rate: 4.9, rev: 89, img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=600", sup: "sintetica", ben: ["gradas"], urg: "Reto Libre", urg_t: "fem" },
+            { id: 4, n: "Líbano Sintética", s: "curinca", r: "mix", t: "alquiler", p: 35, rate: 4.1, rev: 22, img: "https://images.unsplash.com/photo-1518605368461-1ee067a99c9c?q=80&w=600", sup: "sintetica", ben: [], urg: "Económica", urg_t: "" },
+            { id: 5, n: "Curinca Natural F11", s: "curinca", r: "masc", t: "alquiler", p: 90, rate: 4.7, rev: 210, img: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?q=80&w=600", sup: "natural", ben: ["parqueo", "gradas"], urg: "Cancha Completa", urg_t: "urgent" },
+            { id: 6, n: "La Castellana Mítica", s: "pescaito", r: "mix", t: "individual", p: 8, rate: 4.5, rev: 310, img: "https://images.unsplash.com/photo-1524015368236-bbf6f72508bf?q=80&w=600", sup: "arena", ben: ["gradas"], urg: "Solo 2 cupos", urg_t: "urgent" },
+            { id: 7, n: "Pescaíto Femenino", s: "pescaito", r: "fem", t: "alquiler", p: 30, rate: 4.8, rev: 112, img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600", sup: "arena", ben: [], urg: "Torneo Fem", urg_t: "fem" },
+            { id: 8, n: "Ciudadela 20 de Julio F7", s: "ciudadela", r: "masc", t: "reto", p: 45, rate: 4.2, rev: 45, img: "https://images.unsplash.com/photo-1510566337590-2fc1f21d0faa?q=80&w=600", sup: "sintetica", ben: [], urg: "", urg_t: "" },
+            { id: 9, n: "Cancha Multiple Ciudadela", s: "ciudadela", r: "mix", t: "individual", p: 5, rate: 3.9, rev: 18, img: "https://images.unsplash.com/photo-1563299796-17596ed6b017?q=80&w=600", sup: "sintetica", ben: ["techo"], urg: "", urg_t: "" },
+            { id: 10, n: "Taganga Beach Soccer", s: "taganga", r: "mix", t: "alquiler", p: 35, rate: 4.7, rev: 67, img: "https://images.unsplash.com/photo-1526232762682-d2f5f7ac7def?q=80&w=600", sup: "arena", ben: ["parqueo"], urg: "Ideal atardecer", urg_t: "urgent" },
+            { id: 11, n: "Taganga Retos Femeninos", s: "taganga", r: "fem", t: "reto", p: 25, rate: 4.9, rev: 102, img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=600", sup: "arena", ben: [], urg: "Top Rating", urg_t: "fem" },
+            { id: 12, n: "Unimagdalena Cancha 1", s: "unimag", r: "fem", t: "individual", p: 5, rate: 4.6, rev: 150, img: "https://images.unsplash.com/photo-1524015368236-bbf6f72508bf?q=80&w=600", sup: "natural", ben: ["gradas", "parqueo"], urg: "Estudiantes", urg_t: "fem" },
+            { id: 13, n: "Unimag Sintética Pro", s: "unimag", r: "masc", t: "alquiler", p: 50, rate: 4.8, rev: 320, img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=600", sup: "sintetica", ben: ["parqueo", "gradas", "techo"], urg: "Premium", urg_t: "urgent" },
+            { id: 14, n: "Unimag Retos Mixtos", s: "unimag", r: "mix", t: "reto", p: 30, rate: 4.3, rev: 88, img: "https://images.unsplash.com/photo-1518605368461-1ee067a99c9c?q=80&w=600", sup: "natural", ben: ["parqueo"], urg: "", urg_t: "" },
+            { id: 15, n: "Rodadero VIP F5", s: "rodadero", r: "masc", t: "alquiler", p: 65, rate: 4.9, rev: 412, img: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?q=80&w=600", sup: "sintetica", ben: ["techo", "parqueo", "gradas"], urg: "Exclusivo", urg_t: "urgent" },
+            { id: 16, n: "Gaira Arena Mixta", s: "rodadero", r: "mix", t: "individual", p: 10, rate: 4.4, rev: 56, img: "https://images.unsplash.com/photo-1563299796-17596ed6b017?q=80&w=600", sup: "sintetica", ben: ["gradas"], urg: "Pocos cupos", urg_t: "urgent" },
+            { id: 17, n: "Playa Rodadero Sur", s: "rodadero", r: "masc", t: "reto", p: 20, rate: 4.2, rev: 90, img: "https://images.unsplash.com/photo-1510566337590-2fc1f21d0faa?q=80&w=600", sup: "arena", ben: [], urg: "", urg_t: "" },
+            { id: 18, n: "Gaira Fem Club", s: "rodadero", r: "fem", t: "alquiler", p: 45, rate: 4.7, rev: 130, img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600", sup: "sintetica", ben: ["parqueo", "techo"], urg: "Liga Fem", urg_t: "fem" }
+        ];
+
+        // NUEVO: Generador masivo de canchas para que los filtros NUNCA fallen
+        const sedesArray = ['curinca', 'pescaito', 'mamatoco', 'ciudadela', 'taganga', 'unimag', 'rodadero'];
+        const ramasArray = ['fem', 'masc', 'mix'];
+        const tiposArray = ['individual', 'reto', 'alquiler'];
+        const supArray = ['sintetica', 'natural', 'arena'];
+        let idExt = 19;
+
+        sedesArray.forEach(s => ramasArray.forEach(r => tiposArray.forEach(t => supArray.forEach(sup => {
+            let benRandom = [];
+            if(Math.random() > 0.5) benRandom.push('techo');
+            if(Math.random() > 0.3) benRandom.push('parqueo');
+            if(Math.random() > 0.4) benRandom.push('gradas');
+            let pRandom = t === 'alquiler' ? 40 : (t === 'reto' ? 25 : 8);
+            pRandom += Math.floor(Math.random() * 20);
+
+            let imgRandom = sup === 'arena' ? "https://images.unsplash.com/photo-1510566337590-2fc1f21d0faa?q=80&w=600" : (sup === 'natural' ? "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?q=80&w=600" : "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=600");
+
+            canchasBase.push({
+                id: idExt++, n: `Cancha ${r.toUpperCase()} ${sup} en ${s}`, s: s, r: r, t: t, sup: sup, ben: benRandom, p: pRandom, rate: (3.8 + Math.random()).toFixed(1), rev: Math.floor(Math.random()*100), img: imgRandom, urg: "", urg_t: ""
+            });
+        }))));
+
+        let canchasActuales = [...canchasBase];
+        let cart = [];
+
+        function renderCanchas(data) {
+            const grid = document.getElementById('main-grid');
+            document.getElementById('result-title').innerText = `Encontramos ${data.length} opciones`;
+            
+            if(data.length === 0) {
+                grid.innerHTML = `<div style="padding: 40px; text-align:center; color:#888; font-size:1.2rem;">No hay canchas que coincidan con estos filtros. Intenta cambiar tu búsqueda.</div>`;
+                return;
+            }
+
+            // Renderizamos solo las primeras 30 para no saturar la web, pero asegurando que la base responda al filtro.
+            const aMostrar = data.slice(0, 30);
+
+            grid.innerHTML = aMostrar.map(c => `
+                <div class="card">
+                    <div class="card-img-wrapper">
+                        ${c.urg ? `<span class="badge-${c.urg_t}">${c.urg}</span>` : ''}
+                        <img src="${c.img}" class="card-img">
+                    </div>
+                    <div class="card-body">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <h3>${c.n}</h3>
+                                <p><i class="fas fa-map-marker-alt" style="color:var(--accent)"></i> Sede ${c.s.toUpperCase()}</p>
+                            </div>
+                            <div class="rating">
+                                <div style="display:flex; flex-direction:column;">
+                                    <span style="font-weight:900; color:#fff;">Excelente</span>
+                                    <span class="rating-text">${c.rev} opiniones</span>
+                                </div>
+                                <div class="rating-score">${c.rate}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="features">
+                            <span class="feature-tag"><i class="fas fa-futbol"></i> ${c.r === 'fem' ? 'Femenino' : c.r === 'mix' ? 'Mixto' : 'Masculino'}</span>
+                            <span class="feature-tag">${c.t.toUpperCase()}</span>
+                            <span class="feature-tag">${c.sup.toUpperCase()}</span>
+                            ${c.ben.includes('techo') ? `<span class="feature-tag"><i class="fas fa-umbrella"></i> Techada</span>` : ''}
+                            ${c.ben.includes('parqueo') ? `<span class="feature-tag"><i class="fas fa-car"></i> Parqueo</span>` : ''}
+                        </div>
+                        
+                        <div class="free-cancel"><i class="fas fa-check-circle"></i> Cancelación gratis antes de 24h</div>
+
+                        <div class="card-footer">
+                            <div class="price-box">
+                                <span class="price-sub">Precio base</span><br>
+                                <span class="price">$${c.p}.00</span>
+                            </div>
+                            <button class="btn btn-add ${c.r === 'fem' ? 'fem' : ''}" onclick="addToCart(${c.id}, '${c.n}', ${c.p}, '${c.r}')">Reservar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filtrar() {
+            const s = document.getElementById('s-sede').value;
+            const r = document.getElementById('s-rama').value;
+            const t = document.getElementById('s-tipo').value;
+
+            const cbSup = Array.from(document.querySelectorAll('.cb-sup:checked')).map(cb => cb.value);
+            const cbBen = Array.from(document.querySelectorAll('.cb-ben:checked')).map(cb => cb.value);
+
+            canchasActuales = canchasBase.filter(c => {
+                const matchBuscador = (s === 'all' || c.s === s) && (r === 'all' || c.r === r) && (t === 'all' || c.t === t);
+                const matchSup = cbSup.length === 0 || cbSup.includes(c.sup);
+                const matchBen = cbBen.length === 0 || cbBen.every(b => c.ben.includes(b));
+                return matchBuscador && matchSup && matchBen;
+            });
+
+            ordenar();
+        }
+
+        function ordenar() {
+            const sortVal = document.getElementById('sort-select').value;
+            if(sortVal === 'p-asc') canchasActuales.sort((a,b) => a.p - b.p);
+            else if(sortVal === 'p-desc') canchasActuales.sort((a,b) => b.p - a.p);
+            else if(sortVal === 'rating') canchasActuales.sort((a,b) => b.rate - a.rate);
+            else canchasActuales.sort((a,b) => a.id - b.id);
+            renderCanchas(canchasActuales);
+        }
+
+        function addToCart(id, nombre, precio, tipo) {
+            cart.push({ cartId: Date.now(), id, nombre, precio, tipo });
+            updateCart();
+            showToast(`Añadido al carrito`);
+        }
+
+        function removeCartItem(cartId) {
+            cart = cart.filter(i => i.cartId !== cartId);
+            updateCart();
+        }
+
+        function updateCart() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const list = document.getElementById('cart-list');
+            
+            list.innerHTML = cart.map(i => `
+                <div class="cart-item ${i.tipo === 'fem' ? 'fem' : ''}">
+                    <div>
+                        <h4 style="font-size:1.1rem; margin-bottom:4px;">${i.nombre}</h4>
+                        <p style="font-size:0.8rem; color:#888;">${i.tipo === 'store' ? 'Equipamiento' : 'Cancha'}</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-weight:900; font-size:1.1rem; color:var(--accent); display:block;">$${i.precio}.00</span>
+                        <i class="fas fa-trash" style="color:#ff4d4d; cursor:pointer; margin-top:8px;" onclick="removeCartItem(${i.cartId})"></i>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + item.precio, 0);
+            document.getElementById('cart-total').innerText = `$${total}.00`;
+        }
+
+        function toggleCart() { 
+            document.getElementById('cart-panel').classList.toggle('open'); 
+            const overlay = document.getElementById('cart-overlay');
+            overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // NUEVO: Función integrada de WhatsApp + Excel
+        function procesarReservaTotal() {
+            const nombre = document.getElementById('cliente-nombre').value.trim();
+            const telefono = document.getElementById('cliente-telefono').value.trim();
+            const fecha = document.getElementById('s-fecha').value || "Pendiente";
+            
+            if(!nombre || !telefono) return alert("Por favor, ingresa tu Nombre y WhatsApp antes de reservar.");
+            if(cart.length === 0) return alert("El carrito está vacío.");
+
+            const total = cart.reduce((sum, item) => sum + item.precio, 0);
+
+            // 1. Guardar y Descargar en Excel para el Administrador
+            guardarEnExcel(nombre, telefono, fecha, total);
+
+            // 2. Construir el mensaje y abrir WhatsApp
+            let msg = `*RESERVA MATCHPOINT SMR*%0A---------------------------%0A*A nombre de:* ${nombre}%0A*Teléfono:* ${telefono}%0A*Fecha solicitada:* ${fecha}%0A---------------------------%0A*DETALLE DEL PEDIDO:*%0A`;
+            
+            cart.forEach(i => msg += `• ${i.nombre} -> $${i.precio}.00%0A`);
+            
+            msg += `---------------------------%0A*TOTAL: $${total}.00*%0A%0A_Por favor confirmar disponibilidad._`;
+            
+            // Retraso para dejar que el Excel se descargue antes de cambiar de app/pestaña
+            setTimeout(() => {
+                window.open(`https://wa.me/573159715828?text=${msg}`, '_blank');
+            }, 800);
+        }
+
+        // NUEVO: Generador de Excel (.csv)
+        function guardarEnExcel(nombre, telefono, fecha, total) {
+            let csvContent = "Fecha_Registro,Nombre_Cliente,Telefono,Fecha_Reserva,Detalle_Pedido,Total_SMR\n";
+            const fechaHoy = new Date().toLocaleString('es-CO');
+            const nombresItems = cart.map(i => i.nombre).join(" + ");
+            
+            // Comillas para evitar problemas con las comas dentro del texto
+            const fila = `"${fechaHoy}","${nombre}","${telefono}","${fecha}","${nombresItems}","${total}"\n`;
+            csvContent += fila;
+
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const fileName = `Reserva_MatchPoint_${nombre.replace(/\s+/g, '_')}.csv`;
+
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; 
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // Init
+        ordenar();
+    </script>
+</body>
+</html>
