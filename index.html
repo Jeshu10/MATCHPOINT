@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATCHPOINT SMR | Ecosistema de Reservas</title>
+    <!-- Tailwind CSS v4 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neon: '#e8ff00',
+                        fem: '#ff007a',
+                        darkBg: '#050506',
+                        cardBg: '#111113',
+                        borderBg: '#1f1f23',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          // IMPORTANTE: Coloca aquí tu Public Key de EmailJS
+          emailjs.init({ publicKey: "TU_PUBLIC_KEY_DE_EMAILJS" });
+       })();
+    </script>
+    <style>
+        .font-header { font-family: 'Barlow Condensed', sans-serif; }
+        body { font-family: 'Inter', sans-serif; background-color: #050506; }
+        /* Custom styled scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #050506; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #e8ff00; }
+        
+        /* Toast animation */
+        @keyframes slideInDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-animate { animation: slideInDown 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="text-neutral-100 min-h-screen flex flex-col antialiased relative">
+
+    <!-- Top Promo Bar -->
+    <div class="bg-neon text-black font-header font-black text-center py-2 px-4 text-xs md:text-sm tracking-widest uppercase">
+        ⚡ EXCLUSIVO SANTA MARTA | REGÍSTRATE HOY Y OBTÉN UN 20% EN TU PRIMERA RESERVA <span class="text-fem font-bold">#MATCHPOINTSMR</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-darkBg/95 backdrop-blur-md border-b border-neutral-800/80 px-4 py-3 md:px-8 flex items-center justify-between flex-wrap gap-4 shadow-xl">
+        <div class="flex items-center gap-3">
+            <a href="#" class="font-header text-2xl md:text-3xl font-black tracking-tighter text-white">
+                MATCH<span class="text-black bg-neon px-1.5 py-0.5 rounded ml-1">POINT</span>
+            </a>
+            <span class="hidden lg:inline-block text-xs uppercase tracking-widest text-neutral-500 font-bold border-l border-neutral-800 pl-3">
+                Santa Marta
+            </span>
+        </div>
+
+        <!-- Mode Toggle System -->
+        <div class="flex items-center bg-neutral-900 border border-neutral-800 p-1.5 rounded-full overflow-x-auto whitespace-nowrap scrollbar-none w-full md:w-auto">
+            <button id="btn-mode-player" onclick="switchMode('player')" class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 bg-neon text-black">
+                <i class="fas fa-futbol"></i> Jugadores
+            </button>
+            <button id="btn-mode-owner" onclick="switchMode('owner')" class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 text-neutral-400 hover:text-white">
+                <i class="fas fa-clipboard-list"></i> Portal Dueños
+            </button>
+            <button id="btn-mode-register" onclick="switchMode('register')" class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 text-neutral-400 hover:text-white border-l border-neutral-700 ml-1 pl-3">
+                <i class="fas fa-plus-circle"></i> Asocia tu Cancha
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full relative">
+
+        <!-- ==================== ENTORNO DE JUGADOR (B2C) ==================== -->
+        <div id="section-player-view" class="space-y-8 block">
+            <!-- Hero & Search Bar -->
+            <div class="text-center space-y-4 max-w-3xl mx-auto my-6 md:my-10">
+                <h1 class="font-header text-4xl md:text-6xl font-black leading-tight uppercase">
+                    Reserva tu cancha en <span class="text-neon">Santa Marta</span> al instante
+                </h1>
+                <p class="text-sm md:text-base text-neutral-400">
+                    Encuentra disponibilidad real, elige tus implementos y confirma tu partido de forma segura. 
+                </p>
+            </div>
+
+            <!-- Interactive Floating Search Bar -->
+            <div class="bg-cardBg border border-neutral-800 rounded-2xl md:rounded-full p-3 md:py-2 md:px-8 shadow-[0_10px_40px_rgba(232,255,0,0.05)] flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center max-w-4xl mx-auto">
+                <div class="flex-1 border-b md:border-b-0 md:border-r border-neutral-800 pb-2 md:pb-0 md:pr-4">
+                    <span class="text-[10px] uppercase font-bold text-neutral-500 block">¿Dónde quieres jugar?</span>
+                    <input type="text" id="search-location" oninput="filterCourts()" placeholder="Sede o Barrio..." class="bg-transparent text-sm font-semibold w-full outline-none text-white placeholder-neutral-600 mt-1">
+                </div>
+                <div class="flex-1 border-b md:border-b-0 md:border-r border-neutral-800 pb-2 md:pb-0 md:pr-4">
+                    <span class="text-[10px] uppercase font-bold text-neutral-500 block">Categoría de Juego</span>
+                    <select id="search-category" onchange="filterCourts()" class="bg-transparent text-sm font-semibold w-full outline-none text-white mt-1 cursor-pointer">
+                        <option value="all" class="bg-cardBg text-white">Cualquiera</option>
+                        <option value="sintetica" class="bg-cardBg text-white">Sintética Profesional</option>
+                        <option value="femenino" class="bg-cardBg text-white">Femenino Exclusive</option>
+                        <option value="torneos" class="bg-cardBg text-white">Sede de Torneos</option>
+                    </select>
+                </div>
+                <div>
+                    <button onclick="triggerQuickSearch()" class="w-full bg-neon text-black font-header font-black px-8 py-3 rounded-xl md:rounded-full flex items-center justify-center gap-2 uppercase tracking-wider text-sm hover:scale-105 transition-all duration-300 cursor-pointer">
+                        <i class="fas fa-search text-xs"></i> Buscar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Categories Selector Tabs -->
+            <div class="flex items-center gap-4 border-b border-neutral-800/80 pb-4 overflow-x-auto whitespace-nowrap scrollbar-none" id="categories-tabs">
+                <button onclick="setActiveCategory('all')" class="category-tab flex flex-col items-center gap-2 px-4 py-2 border-b-2 border-neon text-white text-xs font-semibold uppercase tracking-wider transition-all">
+                    <i class="fas fa-border-all text-lg"></i><span>Ver Todo</span>
+                </button>
+                <button onclick="setActiveCategory('sintetica')" class="category-tab flex flex-col items-center gap-2 px-4 py-2 border-b-2 border-transparent text-neutral-500 hover:text-white text-xs font-semibold uppercase tracking-wider transition-all">
+                    <i class="fas fa-futbol text-lg"></i><span>Sintéticas</span>
+                </button>
+                <button onclick="setActiveCategory('femenino')" class="category-tab flex flex-col items-center gap-2 px-4 py-2 border-b-2 border-transparent text-neutral-500 hover:text-white text-xs font-semibold uppercase tracking-wider transition-all">
+                    <i class="fas fa-venus text-lg text-fem"></i><span class="text-fem font-bold">Femenino Only</span>
+                </button>
+                <button onclick="setActiveCategory('torneos')" class="category-tab flex flex-col items-center gap-2 px-4 py-2 border-b-2 border-transparent text-neutral-500 hover:text-white text-xs font-semibold uppercase tracking-wider transition-all">
+                    <i class="fas fa-trophy text-lg text-yellow-400"></i><span>Torneos SMR</span>
+                </button>
+            </div>
+
+            <!-- Courts Listings Grid -->
+            <div id="courts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Se poblará dinámicamente con las 10 canchas -->
+            </div>
+        </div>
+
+        <!-- ==================== ENTORNO PORTAL DUEÑOS (B2B Sedes) ==================== -->
+        <div id="section-owner-view" class="space-y-8 hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-800 pb-5">
+                <div>
+                    <span class="text-neon text-[10px] uppercase font-black tracking-widest block mb-1">Entorno Privado de Gestión</span>
+                    <h2 class="font-header text-3xl font-black uppercase tracking-wider">
+                        Dashboard de <span class="text-white">Operaciones</span>
+                    </h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-neutral-500 uppercase font-bold">Sede Activa:</span>
+                    <select id="owner-court-select" onchange="renderOwnerDashboard()" class="bg-neutral-900 border border-neutral-800 rounded-lg p-2 text-sm text-white font-semibold outline-none focus:border-neon cursor-pointer max-w-[200px] text-ellipsis">
+                        <!-- Options generated by JS -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Owner KPIs -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-cardBg border border-neutral-800 p-5 rounded-2xl">
+                    <span class="text-[10px] text-neutral-500 uppercase font-black tracking-widest block">Ingresos del Día</span>
+                    <h3 id="owner-kpi-revenue" class="text-2xl md:text-3xl font-bold font-header text-neon mt-1">$0</h3>
+                </div>
+                <div class="bg-cardBg border border-neutral-800 p-5 rounded-2xl">
+                    <span class="text-[10px] text-neutral-500 uppercase font-black tracking-widest block">Reservas Confirmadas</span>
+                    <h3 id="owner-kpi-bookings" class="text-2xl md:text-3xl font-bold font-header text-white mt-1">0</h3>
+                </div>
+                <div class="bg-cardBg border border-neutral-800 p-5 rounded-2xl">
+                    <span class="text-[10px] text-neutral-500 uppercase font-black tracking-widest block">Ocupación (16h a 22h)</span>
+                    <h3 id="owner-kpi-occupancy" class="text-2xl md:text-3xl font-bold font-header text-white mt-1">0%</h3>
+                </div>
+                <div class="bg-cardBg border border-neutral-800 p-5 rounded-2xl border-l-4 border-blue-500">
+                    <span class="text-[10px] text-blue-400 uppercase font-black tracking-widest block">Ventas Tienda (Extras)</span>
+                    <h3 id="owner-kpi-extras" class="text-2xl md:text-3xl font-bold font-header text-white mt-1">$0</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Daily Agenda Timeline -->
+                <div class="bg-cardBg border border-neutral-800 p-6 rounded-2xl lg:col-span-2 shadow-xl">
+                    <div class="flex items-center justify-between border-b border-neutral-800 pb-4 mb-4">
+                        <h4 class="font-header text-xl font-bold uppercase tracking-wider text-neutral-200">
+                            Agenda de Hoy <span class="text-neutral-500 text-sm font-normal ml-2" id="owner-date-display"></span>
+                        </h4>
+                    </div>
+                    <div id="owner-agenda-list" class="space-y-3">
+                        <!-- Agenda renderizada por JS -->
+                    </div>
+                </div>
+
+                <!-- Right: Quick Actions -->
+                <div class="space-y-6">
+                    <div class="bg-cardBg border border-neutral-800 p-6 rounded-2xl">
+                        <h4 class="font-header text-lg font-bold uppercase tracking-wider text-neutral-200 mb-4">Acciones Rápidas</h4>
+                        <div class="space-y-3">
+                            <button class="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl flex items-center gap-3 text-left hover:bg-neutral-800 transition">
+                                <div class="bg-emerald-500/10 text-emerald-500 w-10 h-10 rounded-lg flex items-center justify-center"><i class="fas fa-hand-holding-usd"></i></div>
+                                <div><span class="block text-sm font-bold text-white uppercase">Registrar Abono Físico</span></div>
+                            </button>
+                            <button class="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl flex items-center gap-3 text-left hover:bg-neutral-800 transition">
+                                <div class="bg-red-500/10 text-red-500 w-10 h-10 rounded-lg flex items-center justify-center"><i class="fas fa-lock"></i></div>
+                                <div><span class="block text-sm font-bold text-white uppercase">Bloquear Cancha</span></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ENTORNO DE REGISTRO DE DUEÑOS (ASOCIA TU CANCHA) ==================== -->
+        <div id="section-register-view" class="space-y-8 hidden">
+            <div class="text-center space-y-4 max-w-2xl mx-auto my-6 md:my-10">
+                <h2 class="font-header text-4xl md:text-5xl font-black uppercase text-neon">Asocia tu Escenario</h2>
+                <p class="text-sm md:text-base text-neutral-400">Únete a la red más grande de Santa Marta. Gestiona tus reservas y aumenta la ocupación de tu cancha al 100%.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <!-- Formulario -->
+                <div class="bg-cardBg border border-neutral-800 p-6 lg:p-8 rounded-3xl shadow-xl">
+                    <h3 class="font-header text-xl font-bold uppercase border-b border-neutral-800 pb-3 mb-6">Datos de la Cancha</h3>
+                    <form id="form-register-court" onsubmit="submitCourtRegistration(event)" class="space-y-4">
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Nombre Comercial de la Sede *</label>
+                            <input type="text" id="reg-name" required placeholder="Ej: La Jaula Dorada SMR" class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Dirección Exacta *</label>
+                            <input type="text" id="reg-address" required placeholder="Ej: Calle 22 #10-15, Centro" class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Precio Promedio / Hora *</label>
+                                <input type="number" id="reg-price" required placeholder="80000" min="20000" class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Disponibilidad</label>
+                                <select class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                                    <option>Lunes a Domingo (24/7)</option>
+                                    <option>Tardes y Noches (4pm a 11pm)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Correo Electrónico del Propietario *</label>
+                            <input type="email" id="reg-email" required placeholder="tu@correo.com" class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Breve Descripción *</label>
+                            <textarea id="reg-desc" required placeholder="Cancha sintética de 5v5 con graderías e hidratación..." rows="3" class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Enlace a Fotografía (URL)</label>
+                            <input type="url" id="reg-photo" placeholder="Opcional. Se usará una genérica si no hay." class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit" id="btn-register" class="w-full bg-neon text-black font-header font-black p-4 rounded-xl text-lg uppercase tracking-wider hover:bg-white transition-all shadow-[0_5px_20px_rgba(232,255,0,0.2)]">
+                                Enviar Solicitud de Registro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Panel de Seguimiento -->
+                <div class="bg-cardBg border border-neutral-800 p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-full">
+                    <h3 class="font-header text-xl font-bold uppercase border-b border-neutral-800 pb-3 mb-6">Panel de Seguimiento</h3>
+                    <p class="text-xs text-neutral-400 mb-6">Aquí puedes revisar el estado de las canchas que has solicitado inscribir en la red MatchPoint SMR.</p>
+                    
+                    <div class="overflow-x-auto flex-grow bg-neutral-900/50 rounded-xl border border-neutral-800">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-neutral-900">
+                                <tr class="text-neutral-500 uppercase font-black tracking-widest text-[10px]">
+                                    <th class="p-4">Nombre de la Sede</th>
+                                    <th class="p-4">Fecha Alta</th>
+                                    <th class="p-4">Estado Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tracking-tbody" class="divide-y divide-neutral-800 text-neutral-300">
+                                <tr>
+                                    <td colspan="3" class="p-6 text-center text-neutral-500 font-semibold italic">No tienes solicitudes activas.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex gap-3 items-start">
+                        <i class="fas fa-info-circle text-blue-400 mt-1"></i>
+                        <p class="text-[11px] text-neutral-300 leading-relaxed">El proceso de validación suele tardar de 24 a 48 horas. Verificamos la ubicación e infraestructura para garantizar el Standard MatchPoint.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Floating Customer Support Button -->
+    <a href="https://wa.me/573159715828?text=Hola,%20necesito%20ayuda%20o%20soporte%20con%20la%20plataforma%20MatchPoint%20SMR." target="_blank" class="fixed bottom-6 left-6 z-50 bg-[#25D366] text-white px-5 py-3 rounded-full shadow-2xl font-bold flex items-center gap-2 hover:scale-105 transition-transform cursor-pointer">
+        <i class="fab fa-whatsapp text-2xl"></i> <span class="uppercase tracking-wider text-xs">Atención al Cliente</span>
+    </a>
+
+    <!-- Footer System -->
+    <footer class="border-t border-neutral-800/85 bg-[#08080a] py-8 mt-12 text-center text-neutral-500 text-xs uppercase tracking-widest">
+        <p class="font-header text-lg font-bold text-neutral-300">MATCHPOINT SMR | THE CARIBBEAN SPORT SYSTEM</p>
+        <p class="text-[10px] mt-1">Licenciado para Santa Marta - Magdalena &copy; 2026.</p>
+    </footer>
+
+    <!-- ==================== 1. MODAL DETALLE DE CANCHA (Pre-reserva) ==================== -->
+    <div id="booking-modal" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-neutral-800 w-full max-w-5xl rounded-3xl overflow-hidden max-h-[95vh] flex flex-col shadow-2xl relative">
+            <div class="p-4 md:p-6 border-b border-neutral-800/80 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] uppercase font-black tracking-widest text-neon block">Paso 1: Configurar Partido</span>
+                    <h3 id="modal-court-name" class="font-header text-2xl md:text-3xl font-black text-white uppercase">Sede</h3>
+                </div>
+                <button onclick="closeBookingModal()" class="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center hover:bg-neutral-800 text-white"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="flex-grow overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <!-- Lado Izquierdo: Info y Tienda -->
+                <div class="lg:col-span-3 space-y-6">
+                    <img id="modal-court-img" src="" alt="Court Image" class="w-full h-48 md:h-64 object-cover rounded-2xl border border-neutral-800">
+                    <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+                        <div>
+                            <span class="text-neutral-400 text-xs block">Ubicación</span>
+                            <strong id="modal-court-address" class="text-neutral-200">...</strong>
+                        </div>
+                    </div>
+                    <!-- Tienda Extras -->
+                    <div class="space-y-3">
+                        <span class="text-xs uppercase font-bold text-neutral-400 block">Equipa tu Partido (Tienda MatchPoint)</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="bg-neutral-900 hover:border-neutral-700 p-3 rounded-xl border border-neutral-800/50 flex flex-col justify-between cursor-pointer" onclick="document.getElementById('store-ball').click()">
+                                <div><strong class="text-xs text-white block">Balón Golty F5</strong></div>
+                                <div class="flex items-center justify-between mt-3"><span class="text-neon text-xs font-bold">$10.000</span><input type="checkbox" id="store-ball" onclick="event.stopPropagation()" onchange="calculateBookingTotal()" class="w-4 h-4 accent-[#e8ff00] cursor-pointer"></div>
+                            </div>
+                            <div class="bg-neutral-900 hover:border-neutral-700 p-3 rounded-xl border border-neutral-800/50 flex flex-col justify-between cursor-pointer" onclick="document.getElementById('store-bibs').click()">
+                                <div><strong class="text-xs text-white block">Kit 10 Petos</strong></div>
+                                <div class="flex items-center justify-between mt-3"><span class="text-neon text-xs font-bold">$15.000</span><input type="checkbox" id="store-bibs" onclick="event.stopPropagation()" onchange="calculateBookingTotal()" class="w-4 h-4 accent-[#e8ff00] cursor-pointer"></div>
+                            </div>
+                            <div class="bg-neutral-900 hover:border-neutral-700 p-3 rounded-xl border border-neutral-800/50 flex flex-col justify-between cursor-pointer" onclick="document.getElementById('store-water').click()">
+                                <div><strong class="text-xs text-white block">Paca Agua (x12)</strong></div>
+                                <div class="flex items-center justify-between mt-3"><span class="text-neon text-xs font-bold">$18.000</span><input type="checkbox" id="store-water" onclick="event.stopPropagation()" onchange="calculateBookingTotal()" class="w-4 h-4 accent-[#e8ff00] cursor-pointer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lado Derecho: Configurador -->
+                <div class="lg:col-span-2">
+                    <div class="bg-neutral-900 border border-neutral-800 rounded-3xl p-5 space-y-5 sticky top-0 shadow-lg">
+                        <div class="flex items-baseline justify-between border-b border-neutral-800 pb-3">
+                            <span class="text-xs text-neutral-400 font-bold uppercase">Tarifa Cancha</span>
+                            <div><span id="modal-court-price-text" class="text-xl font-black font-header text-white">$0</span><span class="text-neutral-500 text-xs">/h</span></div>
+                        </div>
+
+                        <form id="form-pre-book" onsubmit="goToCheckout(event)" class="space-y-4">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Fecha</label>
+                                    <input type="date" id="booker-date" required class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-neon">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Hora</label>
+                                    <select id="booker-time" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-neon">
+                                        <option value="16:00">04:00 PM</option><option value="17:00">05:00 PM</option><option value="18:00">06:00 PM</option>
+                                        <option value="19:00" selected>07:00 PM</option><option value="20:00">08:00 PM</option><option value="21:00">09:00 PM</option><option value="22:00">10:00 PM</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="bg-neutral-950 p-4 rounded-xl border border-neutral-800 space-y-2">
+                                <span class="text-[10px] uppercase font-bold text-neutral-500 block">Total a Pagar</span>
+                                <div class="flex justify-between items-baseline pt-2">
+                                    <span class="text-xs font-bold text-white">Subtotal Estimado</span>
+                                    <span id="invoice-total" class="text-xl font-black font-header text-neon">$0</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-white text-black font-header font-black p-3.5 rounded-xl text-sm uppercase tracking-wider hover:bg-neon transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                                Ir al Checkout de Pago <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 2. MODAL DE CHECKOUT (CARRITO Y PAGO SIMULADO) ==================== -->
+    <div id="checkout-modal" class="fixed inset-0 z-[70] bg-darkBg overflow-y-auto hidden flex-col">
+        <!-- Header Checkout -->
+        <div class="bg-cardBg border-b border-neutral-800 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-md">
+            <div class="flex items-center gap-4">
+                <button onclick="backToBooking()" class="text-neutral-400 hover:text-white transition-colors"><i class="fas fa-chevron-left text-lg"></i></button>
+                <span class="font-header text-2xl font-black text-white uppercase tracking-tighter">Checkout <span class="text-neon">Seguro</span></span>
+            </div>
+            <div class="text-xs text-neutral-500 font-bold uppercase"><i class="fas fa-lock text-emerald-500"></i> Encriptación 256-bit</div>
+        </div>
+
+        <div class="max-w-6xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 my-auto">
+            
+            <!-- Columna Izquierda: Datos y Tarjeta -->
+            <div class="space-y-8">
+                <div>
+                    <h2 class="font-header text-2xl font-bold uppercase text-white border-b border-neutral-800 pb-2 mb-4">1. Datos del Capitán</h2>
+                    <form id="checkout-form" onsubmit="confirmPayment(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Nombre Completo</label>
+                                <input type="text" id="chk-name" required placeholder="Ej. Carlos Valderrama" class="w-full bg-cardBg border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Teléfono</label>
+                                <input type="tel" id="chk-phone" required placeholder="Ej. 300 000 0000" class="w-full bg-cardBg border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Correo Electrónico (Para envío de recibo)</label>
+                                <input type="email" id="chk-email" required placeholder="carlos@ejemplo.com" class="w-full bg-cardBg border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none">
+                            </div>
+                        </div>
+
+                        <h2 class="font-header text-2xl font-bold uppercase text-white border-b border-neutral-800 pb-2 mb-4 mt-8 pt-4">2. Método de Pago Simulado</h2>
+                        <div class="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-5 space-y-4 relative overflow-hidden">
+                            <div class="absolute top-2 right-2 bg-yellow-500/20 text-yellow-500 text-[9px] px-2 py-1 uppercase font-bold rounded">Entorno Ficticio</div>
+                            
+                            <div class="flex gap-2 mb-2 text-2xl text-neutral-500">
+                                <i class="fab fa-cc-visa text-blue-400"></i><i class="fab fa-cc-mastercard text-red-400"></i>
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Número de Tarjeta Falsa</label>
+                                <input type="text" required placeholder="0000 0000 0000 0000" pattern="[0-9\s]{13,19}" class="w-full bg-cardBg border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none font-mono">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Vencimiento</label>
+                                    <input type="text" required placeholder="MM/AA" class="w-full bg-cardBg border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none font-mono">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-neutral-400 block mb-1">CVV</label>
+                                    <input type="text" required placeholder="123" class="w-full bg-cardBg border border-neutral-800 rounded-lg p-3 text-sm text-white focus:border-neon outline-none font-mono">
+                                </div>
+                            </div>
+                            <div class="pt-4">
+                                <button type="submit" id="btn-pay" class="w-full bg-neon text-black font-header font-black p-4 rounded-xl text-lg uppercase tracking-wider hover:bg-white transition-all shadow-[0_5px_20px_rgba(232,255,0,0.2)]">
+                                    Pagar y Reservar
+                                </button>
+                                <p class="text-center text-[10px] text-neutral-500 mt-3">*Simulación. Al finalizar enviará un correo ficticio y te redirigirá a WhatsApp.</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Columna Derecha: Resumen de Orden -->
+                <div>
+                    <div class="bg-cardBg border border-neutral-800 rounded-3xl p-6 lg:p-8 sticky top-24 shadow-xl">
+                        <h3 class="font-header text-xl font-bold uppercase text-white border-b border-neutral-800 pb-3 mb-5">Resumen de tu Reserva</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-4">
+                                <div class="bg-neutral-900 w-16 h-16 rounded-xl flex items-center justify-center border border-neutral-800 text-neon text-2xl"><i class="fas fa-futbol"></i></div>
+                                <div>
+                                    <h4 id="chk-court-name" class="text-sm font-bold text-white uppercase">--</h4>
+                                    <p id="chk-date-time" class="text-xs text-neutral-400 mt-1">--</p>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-neutral-800 pt-4 space-y-3">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-neutral-400">Alquiler Cancha (1h)</span>
+                                    <span id="chk-base-price" class="text-white font-semibold font-mono">--</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-neutral-400">Extras (Tienda MatchPoint)</span>
+                                    <span id="chk-extras-price" class="text-white font-semibold font-mono">--</span>
+                                </div>
+                                <div class="text-[10px] text-neutral-500" id="chk-extras-list">Ninguno</div>
+                            </div>
+
+                            <div class="border-t border-neutral-800 pt-4 mt-4">
+                                <div class="flex justify-between items-end">
+                                    <span class="text-sm uppercase font-bold text-neutral-300">Total a Pagar</span>
+                                    <span id="chk-total-price" class="text-3xl font-black font-header text-neon tracking-tight">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Toast Notification -->
+    <div id="toast-notification" class="fixed top-5 right-5 z-[100] bg-emerald-500 text-white px-6 py-4 rounded-xl shadow-2xl font-bold flex items-center gap-3 hidden">
+        <i id="toast-icon" class="fas fa-paper-plane text-3xl"></i>
+        <div>
+            <span id="toast-title" class="block text-sm uppercase font-black">¡Reserva y Pago Exitosos!</span>
+            <span id="toast-email-text" class="block text-xs font-normal opacity-90 mt-1">Recibo enviado al correo. Redirigiendo a WA...</span>
+        </div>
+    </div>
+
+    <!-- ==================== LOGICA DEL NEGOCIO / JS ==================== -->
+    <script>
+        // 1. BASE DE DATOS DE 10 CANCHAS (Fotos realistas de canchas y categorías variadas en Santa Marta)
+        const courtsDB = [
+            { id: 1, name: "Curinca Arena Club", address: "Av. principal de Curinca", price: 80000, category: "sintetica", image: "https://images.unsplash.com/photo-1589487391730-58f20eb2c308?q=80&w=800", badge: "La favorita del público" },
+            { id: 2, name: "Pescaíto Sintética FC", address: "Calle de las Estrellas", price: 70000, category: "sintetica", image: "https://images.unsplash.com/photo-1529900965798-240f113eebc2?q=80&w=800", badge: "Cuna de Campeones" },
+            { id: 3, name: "Estadio Femenino Curinca", address: "Sector Residencial Curinca", price: 90000, category: "femenino", image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800", badge: "Exclusive Women Only" },
+            { id: 4, name: "Pescaíto Arena Pro Liga", address: "Avenida del Río", price: 95000, category: "torneos", image: "https://images.unsplash.com/photo-1551280857-2b9bbe520442?q=80&w=800", badge: "Sede Oficial de Torneo" },
+            { id: 5, name: "La Jaula F5 Gaira", address: "Sector Gaira Central", price: 60000, category: "sintetica", image: "https://images.unsplash.com/photo-1518605368461-1e1296221fea?q=80&w=800", badge: "Económica y rápida" },
+            { id: 6, name: "Sport Center Rodadero", address: "Rodadero Sur", price: 110000, category: "sintetica", image: "https://images.unsplash.com/photo-1600250395378-96105f1f9a2e?q=80&w=800", badge: "Césped FIFA Pro" },
+            { id: 7, name: "Reinas del Balón", address: "Bavaria SMR", price: 85000, category: "femenino", image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800", badge: "Seguridad y Confort" },
+            { id: 8, name: "Arena Centro Histórico", address: "Centro Histórico", price: 100000, category: "torneos", image: "https://images.unsplash.com/photo-1508344928928-7165b67de128?q=80&w=800", badge: "Cancha Premium Elite" },
+            { id: 9, name: "Los Almendros FC", address: "Barrio Los Almendros", price: 65000, category: "sintetica", image: "https://images.unsplash.com/photo-1459865264687-595d652de67e?q=80&w=800", badge: "El Clásico del Barrio" },
+            { id: 10, name: "Bavaria Canchas VIP", address: "Bavaria Real", price: 90000, category: "sintetica", image: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=800", badge: "Con Estacionamiento Privado" }
+        ];
+
+        let reservationsDB = []; 
+        let ownerRequestsDB = []; 
+        let selectedCourt = null;
+        let activeCategoryTab = 'all';
+        let pendingBookingState = null; 
+
+        const copFormatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+        window.onload = function() {
+            renderCourts();
+            document.getElementById('booker-date').value = new Date().toISOString().split('T')[0];
+            populateOwnerDropdown();
+            renderTrackingPanel();
+        };
+
+        // --- NAVEGACIÓN ---
+        function switchMode(mode) {
+            ['player', 'owner', 'register'].forEach(m => {
+                const btn = document.getElementById(`btn-mode-${m}`);
+                const section = document.getElementById(`section-${m}-view`);
+                if (m === mode) {
+                    if(btn) {
+                        btn.classList.add('bg-neon', 'text-black');
+                        btn.classList.remove('text-neutral-400', 'hover:text-white');
+                    }
+                    if(section) section.style.display = 'block';
+                } else {
+                    if(btn) {
+                        btn.classList.remove('bg-neon', 'text-black');
+                        btn.classList.add('text-neutral-400', 'hover:text-white');
+                    }
+                    if(section) section.style.display = 'none';
+                }
+            });
+            if (mode === 'owner') { 
+                populateOwnerDropdown(); 
+                renderOwnerDashboard(); 
+            }
+        }
+
+        // --- MÓDULO B2C (JUGADORES) ---
+        function renderCourts() {
+            const grid = document.getElementById('courts-grid');
+            grid.innerHTML = "";
+
+            const filtered = courtsDB.filter(court => {
+                if (activeCategoryTab !== 'all' && court.category !== activeCategoryTab) return false;
+                const locQuery = document.getElementById('search-location').value.toLowerCase();
+                const catQuery = document.getElementById('search-category').value;
+                if (locQuery && !court.name.toLowerCase().includes(locQuery) && !court.address.toLowerCase().includes(locQuery)) return false;
+                if (catQuery !== 'all' && court.category !== catQuery) return false;
+                return true;
+            });
+
+            filtered.forEach(court => {
+                const card = document.createElement('div');
+                card.className = "bg-cardBg border border-neutral-800 rounded-3xl overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between group";
+                let catBadge = court.category === 'femenino' ? `<span class="absolute top-3 left-3 bg-fem text-white text-[10px] uppercase font-black px-2.5 py-1 rounded-full"><i class="fas fa-venus"></i> Femenino</span>` :
+                               court.category === 'torneos' ? `<span class="absolute top-3 left-3 bg-yellow-400 text-black text-[10px] uppercase font-black px-2.5 py-1 rounded-full"><i class="fas fa-trophy"></i> Torneo</span>` :
+                               `<span class="absolute top-3 left-3 bg-neon text-black text-[10px] uppercase font-black px-2.5 py-1 rounded-full"><i class="fas fa-futbol"></i> Sintética</span>`;
+
+                card.innerHTML = `
+                    <div class="relative overflow-hidden cursor-pointer" onclick="openBookingModal(${court.id})">
+                        <img src="${court.image}" alt="${court.name}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
+                        ${catBadge}
+                    </div>
+                    <div class="p-5 flex-grow flex flex-col justify-between space-y-4">
+                        <div>
+                            <h3 class="font-header text-xl font-bold uppercase tracking-wide text-white group-hover:text-neon transition-colors cursor-pointer" onclick="openBookingModal(${court.id})">${court.name}</h3>
+                            <p class="text-neutral-500 text-2xs mt-1 uppercase"><i class="fas fa-map-marker-alt text-neon"></i> ${court.address}</p>
+                            <span class="text-neutral-400 text-xs font-semibold mt-2 inline-block italic">${court.badge}</span>
+                        </div>
+                        <div class="flex items-center justify-between border-t border-neutral-800 pt-3">
+                            <div><span class="text-[10px] uppercase text-neutral-500 block">Tarifa / hora</span><strong class="text-white text-base font-bold">${copFormatter.format(court.price)}</strong></div>
+                            <button onclick="openBookingModal(${court.id})" class="bg-neon text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white transition-all cursor-pointer shadow-md">Reservar</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function setActiveCategory(cat) {
+            activeCategoryTab = cat;
+            const tabs = document.querySelectorAll('.category-tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('border-neon', 'text-white');
+                tab.classList.add('border-transparent', 'text-neutral-500');
+            });
+            const activeIndex = cat === 'all' ? 0 : cat === 'sintetica' ? 1 : cat === 'femenino' ? 2 : 3;
+            tabs[activeIndex].classList.remove('border-transparent', 'text-neutral-500');
+            tabs[activeIndex].classList.add('border-neon', 'text-white');
+            renderCourts();
+        }
+
+        function filterCourts() { renderCourts(); }
+        function triggerQuickSearch() { renderCourts(); document.getElementById('courts-grid').scrollIntoView({ behavior: 'smooth' }); }
+
+        function openBookingModal(id) {
+            selectedCourt = courtsDB.find(c => c.id === id);
+            document.getElementById('modal-court-name').innerText = selectedCourt.name;
+            document.getElementById('modal-court-address').innerText = selectedCourt.address;
+            document.getElementById('modal-court-img').src = selectedCourt.image;
+            document.getElementById('modal-court-price-text').innerText = copFormatter.format(selectedCourt.price);
+            
+            ['store-ball', 'store-bibs', 'store-water'].forEach(id => document.getElementById(id).checked = false);
+            calculateBookingTotal();
+            document.getElementById('booking-modal').classList.remove('hidden');
+        }
+
+        function closeBookingModal() { document.getElementById('booking-modal').classList.add('hidden'); }
+
+        function calculateBookingTotal() {
+            if (!selectedCourt) return;
+            const basePrice = selectedCourt.price;
+            let extras = 0;
+            if (document.getElementById('store-ball').checked) extras += 10000;
+            if (document.getElementById('store-bibs').checked) extras += 15000;
+            if (document.getElementById('store-water').checked) extras += 18000;
+            document.getElementById('invoice-total').innerText = copFormatter.format(basePrice + extras);
+        }
+
+        function goToCheckout(e) {
+            e.preventDefault();
+            if (!selectedCourt) return;
+
+            const date = document.getElementById('booker-date').value;
+            const time = document.getElementById('booker-time').value;
+            
+            let extrasAmount = 0;
+            let items = [];
+            let itemsText = "";
+            if (document.getElementById('store-ball').checked) { extrasAmount += 10000; items.push("Balón"); itemsText += "⚽ Balón F5\n"; }
+            if (document.getElementById('store-bibs').checked) { extrasAmount += 15000; items.push("Petos"); itemsText += "🎽 Kit Petos\n"; }
+            if (document.getElementById('store-water').checked) { extrasAmount += 18000; items.push("Agua"); itemsText += "💧 Paca de Agua\n"; }
+
+            const total = selectedCourt.price + extrasAmount;
+
+            pendingBookingState = {
+                court: selectedCourt, date: date, time: time,
+                extrasAmount: extrasAmount, items: items,
+                itemsText: itemsText || "Ningún extra.", total: total
+            };
+
+            document.getElementById('chk-court-name').innerText = selectedCourt.name;
+            document.getElementById('chk-date-time').innerText = `📅 ${date} | ⏰ ${time}h`;
+            document.getElementById('chk-base-price').innerText = copFormatter.format(selectedCourt.price);
+            document.getElementById('chk-extras-price').innerText = copFormatter.format(extrasAmount);
+            document.getElementById('chk-extras-list').innerText = pendingBookingState.itemsText.replace(/\n/g, ', ');
+            document.getElementById('chk-total-price').innerText = copFormatter.format(total);
+
+            closeBookingModal();
+            document.getElementById('checkout-modal').classList.remove('hidden');
+        }
+
+        function backToBooking() {
+            document.getElementById('checkout-modal').classList.add('hidden');
+            document.getElementById('booking-modal').classList.remove('hidden');
+        }
+
+        // --- PROCESAMIENTO DEL PAGO CON EMAILJS ---
+        async function confirmPayment(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-pay');
+            const captainName = document.getElementById('chk-name').value;
+            const captainEmail = document.getElementById('chk-email').value;
+            const captainPhone = document.getElementById('chk-phone').value;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando Pago Seguro...';
+            btn.classList.remove('bg-neon', 'text-black', 'hover:bg-white');
+            btn.classList.add('bg-neutral-700', 'text-neutral-400', 'cursor-not-allowed');
+            btn.disabled = true;
+
+            // Variables que se envían al correo real
+            const templateParams = {
+                to_name: captainName,
+                to_email: captainEmail,
+                court_name: pendingBookingState.court.name,
+                date: pendingBookingState.date,
+                time: pendingBookingState.time,
+                total: copFormatter.format(pendingBookingState.total),
+                // Aquí puedes poner la URL real del logo de tu empresa
+                logo_url: "https://images.unsplash.com/photo-1518605368461-1e1296221fea?auto=format&fit=crop&w=150&h=150&q=80" 
+            };
+
+            try {
+                // Envía el correo mediante EmailJS
+                // RECUERDA: Cambiar 'service_matchpoint' y 'template_matchpoint' por tus IDs reales de EmailJS
+                await emailjs.send('service_matchpoint', 'template_matchpoint', templateParams);
+                
+                // 1. Guardar en Base de Datos Oficial (Para el Dueño)
+                reservationsDB.push({
+                    courtId: pendingBookingState.court.id,
+                    date: pendingBookingState.date,
+                    time: pendingBookingState.time,
+                    captain: captainName,
+                    totalPaid: pendingBookingState.total,
+                    extrasAmount: pendingBookingState.extrasAmount,
+                    items: pendingBookingState.items
+                });
+
+                // 2. Preparar el Recibo para WhatsApp (Tu número)
+                const msg = `¡NUEVA COMPRA DESDE LA WEB! 🚨⚽\n\n` +
+                            `Se ha confirmado un pago en la plataforma:\n\n` +
+                            `🏟️ *Sede:* ${pendingBookingState.court.name}\n` +
+                            `👤 *Cliente:* ${captainName}\n` +
+                            `📧 *Correo:* ${captainEmail}\n` +
+                            `📱 *Teléfono:* ${captainPhone}\n` +
+                            `📅 *Fecha:* ${pendingBookingState.date} a las ${pendingBookingState.time}h\n` +
+                            `🛒 *Extras pagados:*\n${pendingBookingState.itemsText}\n` +
+                            `💳 *Total Cobrado:* ${copFormatter.format(pendingBookingState.total)}\n\n` +
+                            `*Recibo enviado automáticamente al correo del cliente.*`;
+
+                const waLink = `https://wa.me/573159715828?text=${encodeURIComponent(msg)}`;
+
+                // 3. UI Feedback
+                document.getElementById('checkout-modal').classList.add('hidden');
+                
+                // Restaurar Botón
+                btn.innerHTML = 'Pagar y Reservar';
+                btn.classList.add('bg-neon', 'text-black', 'hover:bg-white');
+                btn.classList.remove('bg-neutral-700', 'text-neutral-400', 'cursor-not-allowed');
+                btn.disabled = false;
+                document.getElementById('checkout-form').reset();
+
+                const toast = document.getElementById('toast-notification');
+                document.getElementById('toast-icon').className = "fas fa-paper-plane text-3xl";
+                document.getElementById('toast-title').innerText = "¡Reserva y Pago Exitosos!";
+                document.getElementById('toast-email-text').innerText = `Recibo electrónico enviado a ${captainEmail}`;
+                toast.classList.remove('hidden');
+                toast.classList.add('toast-animate');
+                
+                // Redirigir a WA después del éxito
+                setTimeout(() => { 
+                    toast.classList.add('hidden'); 
+                    toast.classList.remove('toast-animate');
+                    window.open(waLink, '_blank'); 
+                }, 3500);
+
+            } catch (err) {
+                console.error("Error EmailJS:", err);
+                alert("Simulación de pago: No se pudo enviar el correo porque EmailJS no está configurado, pero la reserva se guardará para el demo.");
+                
+                // Guardamos la reserva de todos modos para que el demo funcione sin EmailJS configurado
+                reservationsDB.push({
+                    courtId: pendingBookingState.court.id,
+                    date: pendingBookingState.date,
+                    time: pendingBookingState.time,
+                    captain: captainName,
+                    totalPaid: pendingBookingState.total,
+                    extrasAmount: pendingBookingState.extrasAmount,
+                    items: pendingBookingState.items
+                });
+
+                document.getElementById('checkout-modal').classList.add('hidden');
+                btn.innerHTML = 'Pagar y Reservar';
+                btn.classList.add('bg-neon', 'text-black', 'hover:bg-white');
+                btn.classList.remove('bg-neutral-700', 'text-neutral-400', 'cursor-not-allowed');
+                btn.disabled = false;
+                document.getElementById('checkout-form').reset();
+            }
+        }
+
+        // --- LÓGICA MÓDULO DE REGISTRO DUEÑOS (ASOCIA TU CANCHA) ---
+        async function submitCourtRegistration(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-register');
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const desc = document.getElementById('reg-desc').value;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando solicitud...';
+            btn.disabled = true;
+
+            const templateParams = {
+                to_name: name,
+                to_email: email,
+                court_name: name,
+                date: new Date().toLocaleDateString('es-CO'),
+                time: '-',
+                total: 'Inscripción en Revisión'
+            };
+
+            try {
+                await emailjs.send('service_matchpoint', 'template_matchpoint', templateParams);
+            } catch (err) {
+                console.log("EmailJS omitido para demo.");
+            }
+
+            // Agrega a la base de datos de solicitudes
+            ownerRequestsDB.push({
+                name: name,
+                date: new Date().toLocaleDateString('es-CO'),
+                status: 'En Revisión'
+            });
+
+            // Show Toast
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-icon').className = "fas fa-envelope-open-text text-3xl";
+            document.getElementById('toast-title').innerText = "¡Inscripción Recibida!";
+            document.getElementById('toast-email-text').innerText = `Confirmación enviada a ${email}`;
+            
+            toast.classList.remove('hidden');
+            toast.classList.add('toast-animate');
+            
+            setTimeout(() => { 
+                toast.classList.add('hidden'); 
+                toast.classList.remove('toast-animate');
+            }, 4500);
+
+            document.getElementById('form-register-court').reset();
+            btn.innerHTML = 'Enviar Solicitud de Registro';
+            btn.disabled = false;
+            renderTrackingPanel();
+        }
+
+        function renderTrackingPanel() {
+            const tbody = document.getElementById('tracking-tbody');
+            tbody.innerHTML = '';
+            if(ownerRequestsDB.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-6 text-center text-neutral-500 font-semibold italic">No tienes solicitudes activas.</td></tr>';
+                return;
+            }
+            ownerRequestsDB.forEach(req => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-neutral-800/30 transition-colors">
+                        <td class="p-4 font-bold text-white">${req.name}</td>
+                        <td class="p-4 text-neutral-400">${req.date}</td>
+                        <td class="p-4"><span class="bg-yellow-500/20 text-yellow-500 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest"><i class="fas fa-clock mr-1"></i> ${req.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- LÓGICA MÓDULO B2B (PORTAL DUEÑOS) ---
+        function populateOwnerDropdown() {
+            const select = document.getElementById('owner-court-select');
+            select.innerHTML = "";
+            courtsDB.forEach(court => {
+                const opt = document.createElement('option');
+                opt.value = court.id;
+                opt.innerText = court.name;
+                select.appendChild(opt);
+            });
+            if(!select.value && courtsDB.length > 0) select.value = courtsDB[0].id;
+        }
+
+        function renderOwnerDashboard() {
+            const select = document.getElementById('owner-court-select');
+            const courtId = parseInt(select.value);
+            if(isNaN(courtId)) return;
+
+            const todayStr = document.getElementById('booker-date').value || new Date().toISOString().split('T')[0];
+            document.getElementById('owner-date-display').innerText = `(${todayStr})`;
+
+            // Sincronización Real con lo pagado en el Checkout
+            const todaysReservations = reservationsDB.filter(r => r.courtId === courtId && r.date === todayStr);
+
+            let totalRevenue = 0, totalExtras = 0;
+            todaysReservations.forEach(r => { totalRevenue += r.totalPaid; totalExtras += r.extrasAmount; });
+
+            const scheduleHours = ["16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
+            const occupancyRate = Math.round((todaysReservations.length / scheduleHours.length) * 100);
+
+            document.getElementById('owner-kpi-revenue').innerText = copFormatter.format(totalRevenue);
+            document.getElementById('owner-kpi-bookings').innerText = todaysReservations.length;
+            document.getElementById('owner-kpi-occupancy').innerText = occupancyRate + "%";
+            document.getElementById('owner-kpi-extras').innerText = copFormatter.format(totalExtras);
+
+            const agendaContainer = document.getElementById('owner-agenda-list');
+            agendaContainer.innerHTML = "";
+
+            scheduleHours.forEach(hour => {
+                const res = todaysReservations.find(r => r.time === hour);
+                const slotDiv = document.createElement('div');
+                
+                if (res) {
+                    let extrasBadges = res.items.length > 0 
+                        ? res.items.map(i => `<span class="bg-cardBg px-2 py-0.5 rounded text-neon border border-neutral-700">${i}</span>`).join(" ")
+                        : `<span class="text-neutral-500">Ninguno</span>`;
+                        
+                    slotDiv.className = "bg-neutral-900 border-l-4 border-emerald-500 rounded-r-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md";
+                    slotDiv.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <span class="font-header text-2xl font-black text-white w-16">${hour}</span>
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-emerald-400 block"><i class="fas fa-check-circle"></i> Pago Confirmado</span>
+                                <strong class="text-white font-bold text-sm flex items-center gap-2 mt-0.5">
+                                    <i class="fas fa-user text-neutral-500"></i> ${res.captain}
+                                </strong>
+                            </div>
+                        </div>
+                        <div class="flex flex-col md:items-end gap-1 text-xs font-semibold">
+                            <span class="text-white">${copFormatter.format(res.totalPaid)}</span>
+                            <div class="flex gap-1">${extrasBadges}</div>
+                        </div>
+                    `;
+                } else {
+                    slotDiv.className = "bg-cardBg border border-neutral-800/60 border-l-4 border-neutral-700 rounded-r-xl p-4 flex items-center justify-between gap-3 opacity-60 hover:opacity-100 transition-opacity";
+                    slotDiv.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <span class="font-header text-2xl font-black text-neutral-500 w-16">${hour}</span>
+                            <div><strong class="text-neutral-400 font-bold text-sm">Disponible</strong></div>
+                        </div>
+                        <button class="text-[10px] uppercase tracking-wider font-bold bg-neutral-800 text-neutral-400 px-3 py-1.5 rounded hover:bg-red-500/20 hover:text-red-400 transition-colors">Bloquear</button>
+                    `;
+                }
+                agendaContainer.appendChild(slotDiv);
+            });
+        }
+    </script>
+</body>
+</html>
